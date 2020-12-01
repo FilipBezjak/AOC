@@ -24,10 +24,30 @@ end
 module type Solver = sig
   val naloga1 : string -> string
 
-  val naloga2 : string -> string
+  val naloga2 : string -> string -> string
 end
 
 module Solver0 : Solver = struct
+  let cost_fun x = (x / 3) - 2
+
+  let rec full_cost x =
+    let c_cost = cost_fun x in
+    if c_cost <= 0 then 0 else c_cost + full_cost c_cost
+
+  let naloga1 data =
+    let lines = List.lines data in
+    lines |> List.int_list
+    |> List.fold_left (fun s x -> s + cost_fun x) 0
+    |> string_of_int
+
+  let naloga2 data _part1 =
+    data |> List.lines |> List.int_list |> List.map full_cost |> List.sum
+    |> string_of_int
+
+end
+
+(* Tukaj re-definirajte funkcijo naloga1 in naloga2 *)
+module Solver1 : Solver = struct
   let rec preveri_prvega (a: int) list : int option =
     match list with
     |b::rest -> if a + b = 2020 then Some b else (preveri_prvega a (rest))
@@ -63,30 +83,22 @@ module Solver0 : Solver = struct
         | (a,(Some (Some b,c))) -> a*b*c
         | _ -> failwith "krneke"
 
-      
-    let naloga2 data= 
+  
+    let naloga2 data _part1= 
       let lines = List.lines data in
       lines |> List.int_list
       |> funkcija |> zmnozi2
       |> string_of_int
-
 end
-
-(* Tukaj re-definirajte funkcijo naloga1 in naloga2 *)
-(*module Solver1 : Solver = struct
-  let naloga1 data = ""
-
-  let naloga2 data _part1 = ""
-end*)
 
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
-  | "1" -> (module Solver0)
+  | "1" -> (module Solver1)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
-  let day = "0" in (*Sys.argv.(1) in*)
+  let day = "1" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
@@ -97,7 +109,7 @@ let main () =
   print_endline part1;
   print_endline ("Taken: " ^ string_of_float t1_time ^ "s");
   let p2_start = Sys.time () in
-  let part2 = Solver.naloga2 input_data in
+  let part2 = Solver.naloga2 input_data part1 in
   let t2_time = Sys.time () -. p2_start in
   print_endline "PART 2:";
   print_endline part2;
