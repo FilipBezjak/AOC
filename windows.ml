@@ -19,6 +19,14 @@ module List = struct
     sum' 0 l
 
   let lines = String.split_on_char '\n'
+
+  let rec len list=
+    let rec aux st list=
+      match list with
+      | a::rest -> aux (st+1) rest
+      | []-> st
+    in
+    aux 0 list
 end
 
 module type Solver = sig
@@ -92,13 +100,101 @@ module Solver1 : Solver = struct
 end
 
 (* Poženemo zadevo *)
+
+module Solver2 : Solver = struct
+
+  let ocisti_c (str: string) : string=
+    let [crka;_] = String.split_on_char ':' str in
+    crka
+  
+    let rec len list=
+      let rec aux st list=
+        match list with
+        | a::rest -> aux (st+1) rest
+        | []-> st
+      in
+      aux 0 list
+  
+  let rec razpakira (niz: string) =
+    let rec aux (nizi: string list)=
+      match nizi with
+      | stri::[] -> 
+        let a = String.split_on_char '-' stri in
+        aux a
+      |int1::rest::[] ->
+        let [int2; char; geslo] = String.split_on_char ' ' rest in
+        aux [int1; int2; ocisti_c char; geslo]
+      |_ -> nizi in
+    aux [niz]
+  
+  let rec presteje_crke geslo crka=
+    geslo |> String.split_on_char crka |> len |> (fun x -> x-1)
+  
+  
+  let preveri_geslo prva druga crka geslo=
+    if (presteje_crke geslo crka <= druga) && (prva <=(presteje_crke geslo crka) )then true else false
+  
+
+  let preveri_geslo2 prva druga crka geslo=
+    if (String.get geslo (prva -1)= crka && String.get geslo (druga-1) = crka) then false else
+      if (String.get geslo (prva -1)= crka || String.get geslo (druga-1) = crka) then true else false
+
+  let rec preveri_pravilnost [int1;int2;char;geslo]=
+    let prva = int_of_string int1 in
+    let druga = int_of_string int2 in
+    let crka = String.get char 0 in
+    preveri_geslo prva druga crka geslo
+  
+  let rec preveri_pravilnost2 [int1;int2;char;geslo]=
+    let prva = int_of_string int1 in
+    let druga = int_of_string int2 in
+    let crka = String.get char 0 in
+    preveri_geslo2 prva druga crka geslo
+    
+  let rec steje_pravilne list =
+    let rec aux acc list =
+      match list with
+      |geslo::rest -> if preveri_pravilnost geslo
+        then aux (acc+1) rest else (aux acc rest)
+      | [] -> acc
+    in
+    aux 0 list
+  
+    let rec steje_pravilne2 list =
+      let rec aux acc list =
+        match list with
+        |geslo::rest -> if preveri_pravilnost2 geslo
+          then aux (acc+1) rest else (aux acc rest)
+        | [] -> acc
+      in
+      aux 0 list
+
+  let rec list_to_ListOfValues list=
+    let rec aux acc list =
+      match list with
+      | prvi::rest -> aux ((razpakira prvi)::acc) rest
+      | [] -> acc in
+    aux [] list
+  
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    lines |> list_to_ListOfValues 
+    |> steje_pravilne |> string_of_int
+  
+  let naloga2 input_data part1 =
+    let lines = String.split_on_char '\n' input_data in
+    lines |> list_to_ListOfValues |>steje_pravilne2|> string_of_int
+
+end
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
-  | _ -> failwith "Ni še rešeno"
+  | "2" -> (module Solver2)
+  |_ -> failwith "ni še rešeno"
 
 let main () =
-  let day = "1" in (*Sys.argv.(1) in*)
+  let day = "2" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
