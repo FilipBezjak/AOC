@@ -27,6 +27,26 @@ module List = struct
       | []-> st
     in
     aux 0 list
+(* funckija obrne seznam, kopirana iz stack overflow*)
+  let rev_list l =
+    let rec rev_acc acc list =
+      match list with
+      | hd::tl -> rev_acc (hd::acc) tl
+      | [] -> acc
+    in
+    rev_acc [] l
+
+  (* vrne vsaki drugi element list*)
+  let vsaki_drugi list=
+    let rec vsaki_aux acc list = 
+      match list with
+      | prvi::drugi::rest -> vsaki_aux (prvi::rest) rest
+      | head::[] -> head::acc
+      |_-> acc
+    in
+  list |> vsaki_aux [] |> rev_list
+
+
 end
 
 module type Solver = sig
@@ -34,7 +54,7 @@ module type Solver = sig
 
   val naloga2 : string -> string -> string
 end
-
+(*
 module Solver0 : Solver = struct
   let cost_fun x = (x / 3) - 2
 
@@ -186,15 +206,111 @@ module Solver2 : Solver = struct
     lines |> list_to_ListOfValues |>steje_pravilne2|> string_of_int
 
 end
+*)
+module Solver3 : Solver = struct
+
+(* funckija obrne seznam, kopirana iz stack overflow*)
+  let rev_list l =
+    let rec rev_acc acc list =
+      match list with
+      | hd::tl -> rev_acc (hd::acc) tl
+      | [] -> acc
+    in
+    rev_acc [] l
+
+  (* vrne vsaki drugi element list*)
+  let vsaki_drugi list=
+    let rec vsaki_aux acc list =
+      match list with
+      | prvi::drugi::rest -> vsaki_aux (prvi::acc) rest
+      | head::[] -> head::acc
+      |_-> acc
+    in
+  list |> vsaki_aux [] |> rev_list
+
+
+  let je_drevo n str=
+    if str.[n] = '#'
+    then true else false
+  
+   (* stringe stevilci po clovesko. Zacne z 1 *)
+  
+  let steje_drevesa desno dol (list: string list) =
+    let rec aux desno dol st_dreves korak ostanek list=
+      match list with
+      |prvi::rep->
+      let index = korak*desno + ostanek in
+        print_string " dol- ";
+        print_int dol;  
+        print_int st_dreves;
+        print_string " ostanek- ";
+        print_int ostanek;
+        print_string " korak - ";
+        print_int korak;
+        print_string " index ";
+        print_int index;
+        print_string "\n";
+        print_string "\n";
+        print_string (prvi ^ "\n");
+        if index <= 30 then (* če je korak*desno + ostanek manjši ali enak 31 smo še v vrstici. vse vrstice so dolge 31 znakov *)
+          if je_drevo (index) prvi then aux desno dol (st_dreves + 1) (korak + 1) ostanek rep (* ce je, rekurzivno pokličemo
+           f na preostanku in korak povecamo.*)
+          else aux desno dol st_dreves (korak + 1) ostanek  rep
+        else 
+          let ostanek' = index - 31 in
+             if je_drevo ostanek' prvi then aux desno dol (st_dreves + 1) 1 ostanek' rep
+          else aux desno dol st_dreves 1 ostanek' rep
+        |[]-> st_dreves
+       in
+    if dol = 1 then aux desno dol 0 0 0 list
+    else aux desno dol 0 0 0 (vsaki_drugi list)
+
+        (*ce je korak*desno + ostanek vecje od 31, korak nastavimo na nic ostanek primerno spremenimo  *)
+  
+  
+  
+  (*let rec v_stringList_List list=
+    let rec aux acc list =
+      match list with
+      | prvi::rest -> aux ((explode prvi)::acc) rest
+      | [] -> acc in
+    aux [] list*)
+  
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    lines |> steje_drevesa 3 1 |> string_of_int
+
+  let naloga2 data part1 =
+    let lines = String.split_on_char '\n' data in
+    let prva = lines |> steje_drevesa 1 1 in
+    let druga = lines |> steje_drevesa 3 1 in
+    let tretja = lines |> steje_drevesa 5 1 in
+    let cetrta = lines |> steje_drevesa 7 1 in
+    let peta = lines |> steje_drevesa 1 2 in
+    print_string "\n";
+    print_int prva;
+    print_string "\n";
+    print_int druga;
+    print_string "\n";
+    print_int tretja;
+    print_string "\n";
+    print_int cetrta;
+    print_string "\n";
+    print_int peta;
+    print_string "\n";
+    prva*druga*tretja*cetrta*peta |> string_of_int
+
+end
 
 let choose_solver : string -> (module Solver) = function
-  | "0" -> (module Solver0)
-  | "1" -> (module Solver1)
-  | "2" -> (module Solver2)
+  | "0" -> (module Solver3)
+  | "1" -> (module Solver3)
+  | "2" -> (module Solver3)
+  | "3" -> (module Solver3)
   |_ -> failwith "ni še rešeno"
 
 let main () =
-  let day = "2" in (*Sys.argv.(1) in*)
+  let day = "3" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
