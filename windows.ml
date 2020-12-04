@@ -418,7 +418,7 @@ module Solver4 : Solver = struct
           else zadnja_aux acc xs
           |_-> acc
         in
-        (zadnja_aux 0 str )=7
+        (zadnja_aux 0 str ) = 7
 
     let rec je_pravilno (sez: string list): bool=
       match sez with
