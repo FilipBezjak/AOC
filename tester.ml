@@ -1,17 +1,10 @@
-let rev_list l =
-  let rec rev_acc acc list =
-    match list with
-    | hd::tl -> rev_acc (hd::acc) tl
-    | [] -> acc
-  in
-  rev_acc [] l
-
-(* vrne vsaki drugi element list*)
-let vsaki_drugi list=
-  let rec vsaki_aux acc list =
-    match list with
-    | prvi::drugi::rest -> vsaki_aux (prvi::acc) rest
-    | head::[] -> head::acc
+let rec zadnja_funkcija (str)=
+  let rec zadnja_aux acc stringg =
+    match stringg with
+    |x::xs ->
+    let (a::_) = String.split_on_char ':' x in
+    if not (a <> "cid") then zadnja_aux (acc+1) xs
+    else zadnja_aux acc xs
     |_-> acc
   in
-list |> vsaki_aux [] |> rev_list
+  (zadnja_aux 0 str )= 7

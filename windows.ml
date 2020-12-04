@@ -240,18 +240,6 @@ module Solver3 : Solver = struct
       match list with
       |prvi::rep->
       let index = korak*desno + ostanek in
-        print_string " dol- ";
-        print_int dol;  
-        print_int st_dreves;
-        print_string " ostanek- ";
-        print_int ostanek;
-        print_string " korak - ";
-        print_int korak;
-        print_string " index ";
-        print_int index;
-        print_string "\n";
-        print_string "\n";
-        print_string (prvi ^ "\n");
         if index <= 30 then (* če je korak*desno + ostanek manjši ali enak 31 smo še v vrstici. vse vrstice so dolge 31 znakov *)
           if je_drevo (index) prvi then aux desno dol (st_dreves + 1) (korak + 1) ostanek rep (* ce je, rekurzivno pokličemo
            f na preostanku in korak povecamo.*)
@@ -287,30 +275,182 @@ module Solver3 : Solver = struct
     let tretja = lines |> steje_drevesa 5 1 in
     let cetrta = lines |> steje_drevesa 7 1 in
     let peta = lines |> steje_drevesa 1 2 in
-    print_string "\n";
-    print_int prva;
-    print_string "\n";
-    print_int druga;
-    print_string "\n";
-    print_int tretja;
-    print_string "\n";
-    print_int cetrta;
-    print_string "\n";
-    print_int peta;
-    print_string "\n";
     prva*druga*tretja*cetrta*peta |> string_of_int
 
 end
 
+module Solver4 : Solver = struct
+
+  
+  
+  let rev_list l =
+    let rec rev_acc acc list =
+      match list with
+      | hd::tl -> rev_acc (hd::acc) tl
+      | [] -> acc
+    in
+    rev_acc [] l
+  
+  
+  (*ce je elementvo 8 je ok, ce pa 7 brez string, tudi ok*)
+  let presteje_pomozna string list=
+    if List.mem string list then List.length list = 8
+    else List.length list = 7
+  
+  let f str1 str2 =
+    str1 ^ " " ^ str2
+  
+  let loci_presledke list=
+    let str = List.fold_left f "" list in
+    let nov_sez = String.split_on_char ' ' str in
+    match nov_sez with
+    |_::x-> x
+    |[] -> failwith "napaka pri loci_presledke"
+  
+    (*funkcija dobi seznam stringov npr "SSAD", "Asd", "!!WDAS", "", "SDCA", "" in vse 
+    med dvema "" "" da v en seznam, loci tudi po presledkih*)
+    let passport_v_seznam (list: string list): string list list =
+        let rec uredi_aux (koncni: string list list) (delovni: string list) list2 =
+          match list2 with
+          |""::rest -> 
+          let novi = loci_presledke delovni in
+          uredi_aux (novi::koncni) [] rest
+          |podatek::rest -> uredi_aux koncni (podatek::delovni) rest
+          |[]-> koncni
+        in
+        uredi_aux [] [] list
+  
+  let vrne_brez_stevil string=
+    match String.split_on_char ':' string with
+    |x::y -> x
+    |_-> failwith "napaka"
+  
+  (*vsako geslo iz "ASdad:123232" spremeni samo v "ASdad"*)
+  let uredi_field sez=
+    let rec field_aux sez acc=
+      match sez with
+      |prvi::rest -> field_aux rest ((vrne_brez_stevil prvi)::acc)
+      |[]-> acc
+      in
+    field_aux sez []
+  
+    (*koda je iz stack overflowa*)
+    let explode str =
+      let rec exp a b =
+        if a < 0 then b
+        else exp (a - 1) (str.[a] :: b)
+      in
+      exp (String.length str - 1) []
+  
+  
+  let ocisti_passport funkcija list=
+    let rec ocisti_aux list acc=
+      match list with
+      |prvi::rest -> ocisti_aux rest ((funkcija prvi)::acc)
+      |[]-> acc
+      in
+    ocisti_aux list []
+  
+    let presteje_passporte funkcija list1=
+      let rec presteje_aux list acc=
+        match list with
+        |prvi::rest -> if (funkcija prvi) then presteje_aux rest (acc +1) else presteje_aux rest acc
+        |[]-> acc
+        in
+      presteje_aux list1 0
+  
+  
+    let preveri_byr (geslo:string): bool=
+      int_of_string geslo <=2002 && int_of_string geslo >= 1920
+  
+      let preveri_hgt (geslo:string)=
+        let cm y = y<=193 && y>=150 in
+        let inch y = y<=76 && y>=59 in
+        let sez = explode geslo in
+        match sez with
+        |s::d::e::c::m::[]-> if (c = 'c' && m='m') then ([s;d;e] |> List.map (fun x -> String.make 1 x)
+        |> List.fold_left (^) ""
+        |> int_of_string|> cm )else false
+        |d::e::i::n::[]-> if i = 'i' && n='n' then 
+        [d;e] |> List.map (fun x -> String.make 1 x)
+        |> List.fold_left (^) ""
+        |> int_of_string|> inch else false
+        |_->false
+  
+    let preveri_ecl (geslo:string): bool=
+      List.mem geslo ["amb"; "blu"; "brn"; "gry"; "grn"; "hzl"; "oth"]
+  
+    let preveri_hcl (geslo:string): bool=
+      geslo.[0]='#'
+  
+    let preveri_eyr (geslo:string): bool=
+      int_of_string geslo <=2030 && int_of_string geslo >= 2020
+  
+    let preveri_pid (geslo:string): bool=
+      (geslo |> explode |> List.length) = 9
+  
+    let preveri_iyr (geslo:string): bool=
+      int_of_string geslo <=2020 && int_of_string geslo >= 2010
+  
+  
+    let preveri (str: string): bool=
+      (*print_string str;
+      print_string "\n";*)
+      let sez = String.split_on_char ':' str in
+      match sez with
+      | "hgt"::geslo::_ -> preveri_hgt geslo
+      |"byr"::geslo::_ -> preveri_byr geslo
+      |"ecl"::geslo::_ -> preveri_ecl geslo
+      |"hcl"::geslo::_ -> preveri_hcl geslo
+      |"eyr"::geslo::_ -> preveri_eyr geslo
+      |"pid"::geslo::_ -> preveri_pid geslo
+      |"iyr"::geslo::_ -> preveri_iyr geslo
+      |"cid"::geslo::_ -> true
+      |_-> true (*zato se moramo dati filter po prvi 
+      funkciji na koncu*)
+
+      let rec zadnja_funkcija (str)=
+        let rec zadnja_aux acc stringg =
+          match stringg with
+          |x::xs ->
+          let (a::_) = String.split_on_char ':' x in
+          if (a <> "cid") then zadnja_aux (acc+1) xs
+          else zadnja_aux acc xs
+          |_-> acc
+        in
+        (zadnja_aux 0 str )=7
+
+    let rec je_pravilno (sez: string list): bool=
+      match sez with
+      |prvi::rest -> if preveri prvi 
+        then je_pravilno rest else false
+      |[]-> true
+  
+    let naloga2 input part1 =
+    let lines = String.split_on_char '\n' input in
+    lines |> passport_v_seznam |>List.filter zadnja_funkcija|> List.filter je_pravilno
+    |>List.length|> string_of_int
+  
+  
+  
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    lines |> passport_v_seznam |> ocisti_passport uredi_field
+    |> presteje_passporte (presteje_pomozna "cid") |> string_of_int
+  
+  
+end
+
 let choose_solver : string -> (module Solver) = function
-  | "0" -> (module Solver3)
-  | "1" -> (module Solver3)
-  | "2" -> (module Solver3)
-  | "3" -> (module Solver3)
-  |_ -> failwith "ni še rešeno"
+  | "0" -> (module Solver4)
+  | "1" -> (module Solver4)
+  | "2" -> (module Solver4)
+  | "3" -> (module Solver4)
+  | "4" -> (module Solver4)
+  | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "3" in (*Sys.argv.(1) in*)
+  let day = "4" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
