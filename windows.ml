@@ -27,7 +27,7 @@ module List = struct
       | []-> st
     in
     aux 0 list
-(* funckija obrne seznam, kopirana iz stack overflow*)
+  (* funckija obrne seznam, kopirana iz stack overflow*)
   let rev_list l =
     let rec rev_acc acc list =
       match list with
@@ -80,13 +80,13 @@ module Solver1 : Solver = struct
     match list with
     |b::rest -> if a + b = 2020 then Some b else (preveri_prvega a (rest))
     |[] -> None
-(*dobi neki int in seznam in pogleda, če je vsota int z katerim številom iz seznama enaka 2020. Vrne tip option*)
+  (*dobi neki int in seznam in pogleda, če je vsota int z katerim številom iz seznama enaka 2020. Vrne tip option*)
   
   let rec preveri_vsoto prvo (list: int list)  =
     match list with
     |a::rest -> if preveri_prvega (a + prvo) rest != None then Some ((preveri_prvega (a + prvo) rest),a) else preveri_vsoto prvo rest
     |[]-> None
-(*dobi seznam in uporabi funkcijo preveri prvega, pri čemer (a:int) preteče vsa števila v listu, ...  vzame prvega in preveri, če je vsota 2020 s katerim številom iz preostanka seznama. če ne vzame naslednjega in naredi isto*)
+  (*dobi seznam in uporabi funkcijo preveri prvega, pri čemer (a:int) preteče vsa števila v listu, ...  vzame prvega in preveri, če je vsota 2020 s katerim številom iz preostanka seznama. če ne vzame naslednjega in naredi isto*)
 
   let zmnozi list =
     let Some (a,b) = preveri_vsoto 0 list in
@@ -209,7 +209,7 @@ end
 
 module Solver3 : Solver = struct
 
-(* funckija obrne seznam, kopirana iz stack overflow*)
+  (* funckija obrne seznam, kopirana iz stack overflow*)
   let rev_list l =
     let rec rev_acc acc list =
       match list with
@@ -442,14 +442,14 @@ module Solver4 : Solver = struct
 end
 module Solver5 : Solver = struct
 
-let explode str =
+  let explode str =
   let rec exp a b =
     if a < 0 then b
     else exp (a - 1) (str.[a] :: b)
   in
   exp (String.length str - 1) []
 
-let  izracuna list=
+  let  izracuna list=
     let rec izracuna_aux min max list l d=
       let index1 = (1 + max - min)/2 + min in
       let index2 = (1 + d - l)/2 + l in
@@ -463,11 +463,11 @@ let  izracuna list=
       in
     izracuna_aux 0 127 list 0 7 
 
-let id (vrsta, sedez)=
+  let id (vrsta, sedez)=
   vrsta * 8 + sedez
 
   (* funckija obrne seznam, kopirana iz stack overflow*)
-let reverse l =
+  let reverse l =
   let rec rev_acc acc list =
     match list with
     | hd::tl -> rev_acc (hd::acc) tl
@@ -486,7 +486,7 @@ let reverse l =
     |  [] -> [elt]
     | head :: tail -> if elt <= head then elt :: lst else head :: insert elt tail;;
 
-let sez prvi zadnji =
+  let sez prvi zadnji =
   let rec aux acc prvi zadnji  =
     if prvi < zadnji then aux (prvi::acc) (prvi + 1) zadnji
     else (zadnji::acc) in
@@ -583,9 +583,9 @@ module Solver6 : Solver = struct
     then vsebuje x ys else false
     |[]->true
 
-(*za koliko elementov iz glave seznama je vsebovanih v vsakem seznamu v repu*)
+  (*za koliko elementov iz glave seznama je vsebovanih v vsakem seznamu v repu*)
 
-let prestej_vsebovanost_rec glava rep=
+  let prestej_vsebovanost_rec glava rep=
     let rec aux glava rep acc=
       match glava with
       |x::xs-> if vsebuje x rep
@@ -596,7 +596,7 @@ let prestej_vsebovanost_rec glava rep=
     aux glava rep 0
 
 
-let prestej_vsebovanost list=
+  let prestej_vsebovanost list=
   match list with
   |glava::rep ->
   prestej_vsebovanost_rec glava rep
@@ -604,13 +604,13 @@ let prestej_vsebovanost list=
 
 
     
-let naloga2 (data: string) prva=
-  let lines = String.split_on_char '\n' data in
-  lines|> passport_v_seznam 
-  |> List.map (List.map explode)
-  |> List.map prestej_vsebovanost
-  |>List.fold_left (+) 0
-  |> string_of_int
+  let naloga2 (data: string) prva=
+    let lines = String.split_on_char '\n' data in
+    lines|> passport_v_seznam 
+    |> List.map (List.map explode)
+    |> List.map prestej_vsebovanost
+    |>List.fold_left (+) 0
+    |> string_of_int
 
 end
 
