@@ -1,76 +1,74 @@
-let explode str =
-  let rec exp a b =
-    if a < 0 then b
-    else exp (a - 1) (str.[a] :: b)
-  in
-  exp (String.length str - 1) []
+let f str1 str2 =
+  str1 ^ " " ^ str2
 
-let  izracuna list=
-    let rec izracuna_aux min max list l d=
-      let index1 = (1 + max - min)/2 + min in
-      let index2 = (1 + d - l)/2 + l in
-      match list with
-      | 'F'::rest -> izracuna_aux min (index1-1) rest l d
-      | 'B'::rest -> izracuna_aux index1 max rest l d
-      | 'L'::rest -> izracuna_aux index1 max rest l (index2-1)
-      | 'R'::rest -> izracuna_aux index1 max rest index2 d
-      | [] -> (min,l)
-      |_ -> failwith "napacen vnos"
+
+  let g str1 str2 =
+    str1 ^ str2
+
+
+    let explode str =
+      let rec exp a b =
+        if a < 0 then b
+        else exp (a - 1) (str.[a] :: b)
       in
-    izracuna_aux 0 127 list 0 7 
-(* funckija obrne seznam, kopirana iz stack overflow*)
-let reverse l =
-  let rec rev_acc acc list =
-    match list with
-    | hd::tl -> rev_acc (hd::acc) tl
-    | [] -> acc
+      exp (String.length str - 1) []
+
+let loci_presledke list=
+  let str = List.fold_left f "" list in
+  let nov_sez = String.split_on_char ' ' str in
+  match nov_sez with
+  |_::x-> x
+  |[] -> failwith "napaka pri loci_presledke"
+
+
+ (*funkcija iz stackoverflow, odstrani ponovljene elemente v listu*)
+let uniq_cons x xs = if List.mem x xs then xs else x :: xs
+
+let remove_from_right xs = List.fold_right uniq_cons xs []
+
+
+let passport_v_seznam (list: string list): string list list =
+  let rec uredi_aux (koncni: string list list) (delovni: string list) list2 =
+    match list2 with
+    |""::rest -> 
+    let novi = loci_presledke delovni in
+    uredi_aux (novi::koncni) [] rest
+    |podatek::rest -> uredi_aux koncni (podatek::delovni) rest
+    |[]-> (delovni::koncni)
   in
-  rev_acc [] l
+  uredi_aux [] [] list
 
 
-let id (vrsta, sedez)=
-  vrsta * 8 + sedez
+  let rec vsebuje x rep=
+    match rep with
+    |y::ys -> if List.mem x y 
+    then vsebuje x ys else false
+    |[]->true
 
-  (*kopirano z stack overflow. Sortira seznam po velikosti*)
-  let rec sort lst =
-    match lst with
-      [] -> []
-    | head :: tail -> insert head (sort tail)
-  and insert elt lst =
-    match lst with
-    |  [] -> [elt]
-    | head :: tail -> if elt <= head then elt :: lst else head :: insert elt tail;;
+(*za koliko elementov iz glave seznama je vsebovanih v vsakem seznamu v repu*)
 
-let sez prvi zadnji =
-  let rec aux acc prvi zadnji  =
-    if prvi < zadnji then aux (prvi::acc) (prvi + 1) zadnji
-    else (zadnji::acc) in
-    aux [] prvi zadnji
-
-
-    let od_min_do_max list=
-      let list_rev =  reverse list in
-      match list with
-      |prvi::xs->
-      let prvi= prvi in
-      match list_rev with
-      |zadnji::x->
-      let zadnji = zadnji in
-      sez prvi zadnji
-
-    let rec poisce_manjkajoce prvizadnji list=
-        match prvizadnji with
-        |x::xs->
-        if List.mem x list then poisce_manjkajoce xs list else x
-
-    let naloga1 (data: string)=
-      let lines = String.split_on_char '\n' data in
-      let sortiran = lines |>List.map explode|> List.map izracuna |> List.map id
-      |>sort in
-      let sezz = sortiran |> od_min_do_max in
-      poisce_manjkajoce sezz sortiran
-      
+let prestej_vsebovanost_rec glava rep=
+    let rec aux glava rep acc=
+      match glava with
+      |x::xs-> if vsebuje x rep
+      then aux xs rep (acc+1)
+      else aux xs rep acc
+      |[]->acc
+      |_->failwith "napaka pri prestej" in
+    aux glava rep 0
 
 
+let prestej_vsebovanost list=
+  match list with
+  |glava::rep ->
+  prestej_vsebovanost_rec glava rep
+  |_->0
 
 
+  
+let naloga2 (data: string) prva=
+  let lines = String.split_on_char '\n' data in
+  lines|> passport_v_seznam 
+  |> List.map (List.map explode)
+  |> List.map prestej_vsebovanost
+  |>List.fold_left (+) 0

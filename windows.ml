@@ -54,7 +54,7 @@ module type Solver = sig
 
   val naloga2 : string -> string -> string
 end
-(*
+
 module Solver0 : Solver = struct
   let cost_fun x = (x / 3) - 2
 
@@ -91,7 +91,7 @@ module Solver1 : Solver = struct
   let zmnozi list =
     let Some (a,b) = preveri_vsoto 0 list in
     match a with
-    | Some x -> x*b
+    |Some x -> x*b
     |_-> failwith "napaka"
   
     let naloga1 data =
@@ -206,7 +206,7 @@ module Solver2 : Solver = struct
     lines |> list_to_ListOfValues |>steje_pravilne2|> string_of_int
 
 end
-*)
+
 module Solver3 : Solver = struct
 
 (* funckija obrne seznam, kopirana iz stack overflow*)
@@ -523,6 +523,97 @@ let sez prvi zadnji =
 
 end
 
+module Solver6 : Solver = struct
+
+  let f str1 str2 =
+    str1 ^ " " ^ str2
+  
+  
+    let g str1 str2 =
+      str1 ^ str2
+  
+  
+      let explode str =
+        let rec exp a b =
+          if a < 0 then b
+          else exp (a - 1) (str.[a] :: b)
+        in
+        exp (String.length str - 1) []
+  
+  let loci_presledke list=
+    let str = List.fold_left f "" list in
+    let nov_sez = String.split_on_char ' ' str in
+    match nov_sez with
+    |_::x-> x
+    |[] -> failwith "napaka pri loci_presledke"
+  
+  
+   (*funkcija iz stackoverflow, odstrani ponovljene elemente v listu*)
+  let uniq_cons x xs = if List.mem x xs then xs else x :: xs
+  
+  let remove_from_right xs = List.fold_right uniq_cons xs []
+  
+  
+  let passport_v_seznam (list: string list): string list list =
+    let rec uredi_aux (koncni: string list list) (delovni: string list) list2 =
+      match list2 with
+      |""::rest -> 
+      let novi = loci_presledke delovni in
+      uredi_aux (novi::koncni) [] rest
+      |podatek::rest -> uredi_aux koncni (podatek::delovni) rest
+      |[]-> (delovni::koncni)
+    in
+    uredi_aux [] [] list
+  
+    
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    lines |> passport_v_seznam |>List.map (List.fold_left g "")
+    |> List.map explode |> List.map remove_from_right
+    |> List.map List.length |> List.fold_left (+) 0
+    |> string_of_int
+
+    let naloga2 a b = "kezze"
+
+
+    
+  let rec vsebuje x rep=
+    match rep with
+    |y::ys -> if List.mem x y 
+    then vsebuje x ys else false
+    |[]->true
+
+(*za koliko elementov iz glave seznama je vsebovanih v vsakem seznamu v repu*)
+
+let prestej_vsebovanost_rec glava rep=
+    let rec aux glava rep acc=
+      match glava with
+      |x::xs-> if vsebuje x rep
+      then aux xs rep (acc+1)
+      else aux xs rep acc
+      |[]->acc
+      in
+    aux glava rep 0
+
+
+let prestej_vsebovanost list=
+  match list with
+  |glava::rep ->
+  prestej_vsebovanost_rec glava rep
+  |_->0
+
+
+    
+let naloga2 (data: string) prva=
+  let lines = String.split_on_char '\n' data in
+  lines|> passport_v_seznam 
+  |> List.map (List.map explode)
+  |> List.map prestej_vsebovanost
+  |>List.fold_left (+) 0
+  |> string_of_int
+
+end
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver4)
   | "1" -> (module Solver4)
@@ -530,10 +621,11 @@ let choose_solver : string -> (module Solver) = function
   | "3" -> (module Solver4)
   | "4" -> (module Solver4)
   | "5" -> (module Solver5)
+  | "6" -> (module Solver6)
   | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "5" in (*Sys.argv.(1) in*)
+  let day = "6" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
