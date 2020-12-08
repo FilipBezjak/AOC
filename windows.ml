@@ -1,3 +1,8 @@
+#use "topfind"
+#require "str"
+open Str
+
+
 let preberi_datoteko ime_datoteke =
   let chan = open_in ime_datoteke in
   let vsebina = really_input_string chan (in_channel_length chan) in
@@ -614,6 +619,202 @@ module Solver6 : Solver = struct
 
 end
 
+module Solver7 : Solver = struct
+
+  
+  
+  let fun1 list=
+    String.split_on_char ' '
+  
+      let contain = Str.split (Str.regexp "bags?")
+  
+      let f = global_replace (Str.regexp "contain?") ""
+      let g = global_replace (Str.regexp "[0-9]") ""
+      let h = global_replace (Str.regexp " ") ""
+      let i = global_replace (Str.regexp ",") ""
+  
+      let rec torbe_z_gold (stringi: string list list): string list =
+        match stringi with
+        |y::ys -> if List.mem "shinygold" y then ((List.nth y 0)::(torbe_z_gold ys))
+        else (torbe_z_gold ys)
+        |[]->[]
+
+
+  (*preveri ali seznam sez1 vsebuje kak element sez2 oz, ce imata kak skupen element*)
+  let rec vsebuje sez1 sez2=
+    match sez1 with
+    |y::ys -> if List.mem y sez2 then
+      true
+      else vsebuje ys sez2
+    |[]->false
+
+      let rec presteje torbe podatki : string list=
+        match podatki with
+        |y::ys -> 
+          if vsebuje torbe y then
+          [List.nth y 0]@(presteje torbe ys)
+          else presteje torbe ys
+        |[] -> []
+  
+      let rec koncna_presteje torbe podatki=
+        let sez = presteje torbe podatki in
+        if (List.length sez) !=
+        (List.length (presteje sez podatki))
+        then koncna_presteje sez podatki else
+        sez
+
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    let podatki = lines
+    |> List.map f
+    |> List.map g
+    |> List.map h
+    |> List.map contain
+    |> List.map (List.map i)
+    |> List.map (List.filter (fun x-> (x <> ".")))
+    |> List.filter (fun (y::_)-> (y <> "shinygold"))
+    in
+    let z_zlato = podatki |> torbe_z_gold in
+    koncna_presteje z_zlato podatki
+    |> List.length
+    |>string_of_int
+
+    let naloga2 data part1 =
+    let lines = String.split_on_char '\n' data in
+    let podatki = lines
+    |> List.map f
+    |> List.map g
+    |> List.map h
+    |> List.map contain
+    |> List.map (List.map i)
+    |> List.map (List.filter (fun x-> (x <> ".")))in
+    "nic"
+
+
+end
+
+module Solver8 : Solver = struct
+
+  let indeksiraj index list=
+    (string_of_int index)::list
+
+
+    let skace podatki=
+      let rec aux (index: int) acc podatki stevila=
+        let (i::ukaz::n::_) = List.nth podatki index in
+        if List.mem i stevila then 
+          acc
+        else if ukaz = "jmp" then 
+          aux (index + (int_of_string n)) acc podatki (i::stevila)
+        else if ukaz = "acc" then
+          aux (index + 1) (acc + (int_of_string n)) podatki (i::stevila)
+        else if ukaz = "nop" then
+          aux (index + 1) (acc) podatki (i::stevila)
+        else failwith "skace napaka"
+        in
+        aux 0 0 podatki []
+      
+        (* dobi zacetne podatke. Zacne pri prvem, ce je loop, spremeni prvi nop v jmp oz prvi jmp v nop. 
+        Nato spet zacne pri prvem in spremeni drugi nop/jmp *)
+        let pobere_indekse podatki=
+          let size = List.length podatki in
+          let rec aux (index: int) acc podatki stevila jmp_nop=
+            if size > index then
+            let (i::ukaz::n::_) = List.nth podatki index in
+            if List.mem i stevila then 
+              jmp_nop
+            else if ukaz = "jmp" then 
+              aux (index + 1) acc podatki (i::stevila) (i::jmp_nop)
+            else if ukaz = "acc" then
+              aux (index + 1) (acc + (int_of_string n)) podatki (i::stevila) jmp_nop
+            else if ukaz = "nop" then
+              aux (index + 1) (acc) podatki (i::stevila) (i::jmp_nop)
+            else failwith "skace napaka"
+            else jmp_nop
+            in
+            aux 0 0 podatki [] []
+        
+
+        let skace2 podatki=
+          let size = List.length podatki in
+          let rec aux (index: int) (acc: int) podatki stevila=
+            if size = index then string_of_int acc
+            else
+            (*print_endline "skace2";*)
+            let (i::ukaz::n::_) = List.nth podatki index in
+            if List.mem i stevila then 
+              "loop"
+            else if index >= size then
+              string_of_int acc
+            else if ukaz = "jmp" then 
+              aux (index + (int_of_string n)) acc podatki (i::stevila)
+            else if ukaz = "acc" then
+              aux (index + 1) (acc + (int_of_string n)) podatki (i::stevila)
+            else if ukaz = "nop" then
+              aux (index + 1) (acc) podatki (i::stevila)
+            else failwith "skace napaka"
+            in
+            aux 0 0 podatki []
+
+        let f' index (pos': int) ((i::act::num::_): string list): string list=
+          let pos = string_of_int pos' in
+          if pos = index then 
+            if act = "jmp" then 
+              [i;"nop";num]
+            else if act = "nop" then
+              [i;"jmp";num] 
+            else [i;act;num] 
+          else [i;act;num]
+
+        let spremeni_element (index: string) (podatki: string list list): string list list=
+          List.mapi (f' index) podatki
+
+
+              (* dobi zacetne podatke. Zacne pri prvem, ce je loop, spremeni prvi nop v jmp oz prvi jmp v nop. 
+              Nato spet zacne pri prvem in spremeni drugi nop/jmp, ce ni loop, vrne acc iz prvega *)
+              let menja podatki indeksi=
+                let rec aux podatki' indexi=
+                  match indexi with
+                  |prvi::indexi_rep ->
+                  if skace2 podatki' = "loop" then
+                    let novi_podatki = spremeni_element prvi podatki in
+                    aux novi_podatki indexi_rep
+                  else skace2 podatki'
+                  |_ -> failwith "menja ansnansa" in
+                aux podatki indeksi
+
+    let naloga2 data part1=
+      let lines = String.split_on_char '\n' data in
+      let podatki = lines 
+      |> List.map (String.split_on_char ' ')
+      |> List.mapi indeksiraj in
+      let indeksi = podatki |> pobere_indekse |> List.rev in
+      menja podatki indeksi
+
+
+
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    let podatki = lines 
+    |> List.map (String.split_on_char ' ')
+    |> List.mapi indeksiraj in
+    skace podatki |> string_of_int
+
+
+
+  
+end
+
+(*module Solver9 : Solver = struct
+
+  let naloga1 (data: string)=
+    let lines = String.split_on_char '\n' data in
+    "nic se"
+
+  let naloga2 data part1 = "nic se"
+
+end*)
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver4)
   | "1" -> (module Solver4)
@@ -622,10 +823,13 @@ let choose_solver : string -> (module Solver) = function
   | "4" -> (module Solver4)
   | "5" -> (module Solver5)
   | "6" -> (module Solver6)
+  | "7" -> (module Solver7)
+  | "8" -> (module Solver8)
+  (*| "9" -> (module Solver9)*)
   | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "6" in (*Sys.argv.(1) in*)
+  let day = "8" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
