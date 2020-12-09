@@ -41,6 +41,12 @@ module List = struct
     in
     rev_acc [] l
 
+  let min l=
+    List.fold_left min 9999999999 l
+
+  let max l=
+    List.fold_left max 0 l
+
   (* vrne vsaki drugi element list*)
   let vsaki_drugi list=
     let rec vsaki_aux acc list = 
@@ -805,15 +811,90 @@ module Solver8 : Solver = struct
   
 end
 
-(*module Solver9 : Solver = struct
+module Solver9 : Solver = struct
+
+  let rec preveri_vsoto x xs n=
+    match xs with
+    |y::ys -> if y+x=n then true
+    else preveri_vsoto x ys n
+    |_-> false
+  
+    let rec je_vsota (n: int) (podatki: int list): bool=
+      match podatki with
+        |x::xs -> if (preveri_vsoto x xs n) = true
+          then true else
+          je_vsota n xs
+        |_ -> false
+
+  (*spremeni acc vzame x, acc. X doda na zacetek, zadnji
+  element pa odstrani*)
+      let spremeni_acc x acc=
+        match List.rev_list acc with
+        |y::ys -> [x]@ (List.rev_list ys)
+        |_-> failwith "prekratk seznam"
+
+
+
+(**)
+  let sesteva (preamble: int) (podatki: int list)=
+    let rec aux peamble acc podatki=
+      let size = List.length acc in
+      match podatki with
+      |x::xs ->
+      if size = preamble then
+        if je_vsota x acc then
+          aux preamble (spremeni_acc x acc) xs
+        else
+          x
+      else aux preamble (x::acc) xs
+      |_-> failwith "napaka sesteva"
+      in
+      aux preamble [] podatki
+
+
 
   let naloga1 (data: string)=
     let lines = String.split_on_char '\n' data in
-    "nic se"
+    lines 
+    |> List.map int_of_string
+    |> sesteva 25 
+    |>string_of_int
+    
+      let sesteva2 part1 podatki=
+        let rec aux (part1: int) (podatki': int list) (acc: int list) : int option=
+          match podatki' with 
+          |y::ys-> 
+            if ((List.sum acc) + y) < part1 then
+              aux part1 ys (y::acc) (*y doda k acc*)
+            else if ((List.sum acc) + y) = part1 then
+              Some ((List.min (y::acc)) + (List.max (y::acc)))
+            else (*ce je vsota zaporednih vecja od part 1*)
+              None
+            in
+          aux part1 podatki []
+    
 
-  let naloga2 data part1 = "nic se"
+    let rec sesteva2_prva part1 podatki=
+      match podatki with 
+      |x::xs -> 
+      match sesteva2 part1 xs with
+        |Some z -> z
+        |None  -> sesteva2_prva part1 xs
+      |_-> failwith "napaka sesteva2_prva"
 
-end*)
+
+
+  (*sestej min in max, ne prvega in zadnjegaaaa!!!!!!*)
+  let naloga2 data part1 =
+    let lines = String.split_on_char '\n' data in
+    let x = lines 
+    |> List.map int_of_string
+    |> sesteva2_prva (int_of_string part1) in
+    string_of_int x
+
+
+
+end
 
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver4)
@@ -825,11 +906,11 @@ let choose_solver : string -> (module Solver) = function
   | "6" -> (module Solver6)
   | "7" -> (module Solver7)
   | "8" -> (module Solver8)
-  (*| "9" -> (module Solver9)*)
+  | "9" -> (module Solver9)
   | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "8" in (*Sys.argv.(1) in*)
+  let day = "9" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
