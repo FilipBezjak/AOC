@@ -14,6 +14,103 @@ let izpisi_datoteko ime_datoteke vsebina =
   output_string chan vsebina;
   close_out chan
 
+
+module AVL = struct
+    type height = int
+    type int = height
+    module Elt = Int32
+  
+    type t = Leaf | Node of t * Elt.t * t * height
+  
+    exception Impossible
+  
+    let height = function
+      | Leaf -> 0
+      | Node (_, _, _, h) -> h
+  
+    let empty = Leaf
+  
+    let mknode tl y tr = Node (tl, y, tr, 1 + max (height tl) (height tr))
+  
+    let rec contains x = function
+      | Leaf -> false
+      | Node (tl, y, tr, _) ->
+          match Elt.compare x y with
+          | 0 -> true
+          | res when res < 0 (* x < y *) -> contains x tl
+          | _ (* x > y *) -> contains x tr
+  
+    let rotr = function
+      | Node (Node (t1, y2, t3, _), y4, t5, _) ->
+          mknode t1 y2 (mknode t3 y4 t5)
+      | _ -> raise Impossible
+  
+  
+    let rotl = function
+      | Node (t1, y2, Node (t3, y4, t5, _), _) ->
+          mknode (mknode t1 y2 t3) y4 t5
+      | _ -> raise Impossible
+  
+  
+    let rec insert x = function
+      | Leaf -> Node (Leaf, x, Leaf, 1)
+      | (Node (tl, y, tr, _)) as node ->
+          match Elt.compare x y with
+          | 0 -> node
+          | res when res < 0 (* x < y *) ->
+              begin match insert x tl with
+              | Leaf -> raise Impossible
+              | (Node (tll, yl, tlr, hl)) as tl ->
+                  if hl - height tr <= 1 then
+                    mknode tl y tr
+                  else
+                    let tl = if height tll < height tlr
+                             then rotl tl
+                             else tl
+                    in
+                    rotr (mknode tl y tr)
+              end
+          | _ (* x > y *) ->
+              begin match insert x tr with
+              | Leaf -> raise Impossible
+              | (Node (trl, yr, trr, hr)) as tr ->
+                  if hr - height tl <= 1 then
+                    mknode tl y tr
+                  else
+                    let tr = if height trl > height trr
+                             then rotr tr
+                             else tr
+                    in
+                    rotl (mknode tl y tr)
+            end
+  
+    let rec inorder = function
+      | Leaf -> []
+      | Node (tl, y, tr, _) -> inorder tl @ y :: inorder tr
+  
+    let rec check_balanced = function
+      | Leaf -> ()
+      | Node (tl, _, tr, h) ->
+          assert (h = 1 + max (height tl) (height tr));
+          check_balanced tl;
+          check_balanced tr
+  
+    let check_search_tree =
+      let assert_lt = function
+        | Some x, Some y -> assert (Elt.compare x y < 0);
+        | _, _ -> ()
+      in
+      let rec f bl br = function
+        | Leaf -> assert_lt (bl, br) (* probably redundant *)
+        | Node (tl, y, tr, _) -> assert_lt (bl, Some y);
+                                 assert_lt (Some y, br);
+                                 f bl (Some y) tl;
+                                 f (Some y) br tr
+      in
+      f None None
+
+    end
+
 module List = struct
   include List
 
@@ -43,6 +140,14 @@ module List = struct
 
   let min l=
     List.fold_left min 9999999999 l
+
+    let find x lst : int =
+      let rec aux x list acc=
+        match list with
+        | [] -> failwith "ne najde"
+        | h :: t -> if x = h then acc else aux x t (acc+1)
+        in
+        aux x lst 0
 
   let max l=
     List.fold_left max 0 l
@@ -835,65 +940,132 @@ module Solver9 : Solver = struct
 
 
 
-(**)
-  let sesteva (preamble: int) (podatki: int list)=
-    let rec aux peamble acc podatki=
-      let size = List.length acc in
-      match podatki with
-      |x::xs ->
-      if size = preamble then
-        if je_vsota x acc then
-          aux preamble (spremeni_acc x acc) xs
-        else
-          x
-      else aux preamble (x::acc) xs
-      |_-> failwith "napaka sesteva"
-      in
-      aux preamble [] podatki
+  (**)
+    let sesteva (preamble: int) (podatki: int list)=
+      let rec aux peamble acc podatki=
+        let size = List.length acc in
+        match podatki with
+        |x::xs ->
+        if size = preamble then
+          if je_vsota x acc then
+            aux preamble (spremeni_acc x acc) xs
+          else
+            x
+        else aux preamble (x::acc) xs
+        |_-> failwith "napaka sesteva"
+        in
+        aux preamble [] podatki
 
+
+
+    let naloga1 (data: string)=
+      let lines = String.split_on_char '\n' data in
+      lines 
+      |> List.map int_of_string
+      |> sesteva 25 
+      |>string_of_int
+      
+        let sesteva2 part1 podatki=
+          let rec aux (part1: int) (podatki': int list) (acc: int list) : int option=
+            match podatki' with 
+            |y::ys-> 
+              if ((List.sum acc) + y) < part1 then
+                aux part1 ys (y::acc) (*y doda k acc*)
+              else if ((List.sum acc) + y) = part1 then
+                Some ((List.min (y::acc)) + (List.max (y::acc)))
+              else (*ce je vsota zaporednih vecja od part 1*)
+                None
+              in
+            aux part1 podatki []
+      
+
+      let rec sesteva2_prva part1 podatki=
+        match podatki with 
+        |x::xs -> 
+        match sesteva2 part1 xs with
+          |Some z -> z
+          |None  -> sesteva2_prva part1 xs
+        |_-> failwith "napaka sesteva2_prva"
+
+
+
+    (*sestej min in max, ne prvega in zadnjegaaaa!!!!!!*)
+    let naloga2 data part1 =
+      let lines = String.split_on_char '\n' data in
+      let x = lines 
+      |> List.map int_of_string
+      |> sesteva2_prva (int_of_string part1) in
+      string_of_int x
+
+
+
+end
+
+module Solver15 : Solver = struct
+
+  
+    let rec poteza (zadnji:int) (rest:int list): int list=
+      let index = (List.find zadnji rest) + 1 in
+      (*let prvi = (List.length rest + 1) - index in*)
+      index::zadnji::rest
+
+
+  (* dobi int sez, ga obrne, matcha na zadnjega in rest. Če je zadnji v rest,
+  pokliče funckijo poteza, ki pogleda na katerem mestu je element "zadnji",
+  in vrne razliko list.length - mesto *)
+  let funkcija  i (list: int list): int= 
+    let rev= List.rev_list list in
+    let rec aux list=
+      match list with
+      |zadnji::rest->
+      if List.length list = i then 
+        zadnji else
+        if List.mem zadnji rest then
+        aux (poteza zadnji rest) else
+        aux (0::zadnji::rest)
+      | [] -> failwith "ni seznama"
+      in
+      aux rev
+
+      let rec poteza' (zadnji:int) (rest:int list): int list=
+        let index = (List.find zadnji rest) + 1 in
+        (*let prvi = (List.length rest + 1) - index in*)
+        index::zadnji::rest
+  
+  
+    (* dobi int sez, ga obrne, matcha na zadnjega in rest. Če je zadnji v rest,
+    pokliče funckijo poteza, ki pogleda na katerem mestu je element "zadnji",
+    in vrne razliko list.length - mesto *)
+    let funkcija'  i (listt: int list): int= 
+      let rev= List.rev_list listt in
+      let rec aux len list razlicni=
+        match list with
+        |zadnji::rest->
+        if len = i then 
+          zadnji else
+          if List.mem zadnji razlicni then
+          aux (len +1) (poteza' zadnji rest) razlicni else
+          aux (len +1) (0::zadnji::rest) ([zadnji] @ razlicni)
+        | [] -> failwith "ni seznama"
+        in
+        aux 6 rev [0;14;1;3;7]
+  
 
 
   let naloga1 (data: string)=
-    let lines = String.split_on_char '\n' data in
-    lines 
+    let podatki = String.split_on_char ',' data in
+    podatki 
     |> List.map int_of_string
-    |> sesteva 25 
-    |>string_of_int
-    
-      let sesteva2 part1 podatki=
-        let rec aux (part1: int) (podatki': int list) (acc: int list) : int option=
-          match podatki' with 
-          |y::ys-> 
-            if ((List.sum acc) + y) < part1 then
-              aux part1 ys (y::acc) (*y doda k acc*)
-            else if ((List.sum acc) + y) = part1 then
-              Some ((List.min (y::acc)) + (List.max (y::acc)))
-            else (*ce je vsota zaporednih vecja od part 1*)
-              None
-            in
-          aux part1 podatki []
-    
-
-    let rec sesteva2_prva part1 podatki=
-      match podatki with 
-      |x::xs -> 
-      match sesteva2 part1 xs with
-        |Some z -> z
-        |None  -> sesteva2_prva part1 xs
-      |_-> failwith "napaka sesteva2_prva"
+    |> funkcija 2020
+    |> string_of_int
 
 
-
-  (*sestej min in max, ne prvega in zadnjegaaaa!!!!!!*)
-  let naloga2 data part1 =
-    let lines = String.split_on_char '\n' data in
-    let x = lines 
-    |> List.map int_of_string
-    |> sesteva2_prva (int_of_string part1) in
-    string_of_int x
-
-
-
+    let naloga2 data part1 =
+      let podatki = String.split_on_char ',' data in
+      podatki 
+      |> List.map int_of_string
+      |> funkcija' 320000
+      |> string_of_int
 end
 
 let choose_solver : string -> (module Solver) = function
@@ -907,10 +1079,11 @@ let choose_solver : string -> (module Solver) = function
   | "7" -> (module Solver7)
   | "8" -> (module Solver8)
   | "9" -> (module Solver9)
+  | "15" -> (module Solver15)
   | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "9" in (*Sys.argv.(1) in*)
+  let day = "15" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
