@@ -15,101 +15,7 @@ let izpisi_datoteko ime_datoteke vsebina =
   close_out chan
 
 
-module AVL = struct
-    type height = int
-    type int = height
-    module Elt = Int32
-  
-    type t = Leaf | Node of t * Elt.t * t * height
-  
-    exception Impossible
-  
-    let height = function
-      | Leaf -> 0
-      | Node (_, _, _, h) -> h
-  
-    let empty = Leaf
-  
-    let mknode tl y tr = Node (tl, y, tr, 1 + max (height tl) (height tr))
-  
-    let rec contains x = function
-      | Leaf -> false
-      | Node (tl, y, tr, _) ->
-          match Elt.compare x y with
-          | 0 -> true
-          | res when res < 0 (* x < y *) -> contains x tl
-          | _ (* x > y *) -> contains x tr
-  
-    let rotr = function
-      | Node (Node (t1, y2, t3, _), y4, t5, _) ->
-          mknode t1 y2 (mknode t3 y4 t5)
-      | _ -> raise Impossible
-  
-  
-    let rotl = function
-      | Node (t1, y2, Node (t3, y4, t5, _), _) ->
-          mknode (mknode t1 y2 t3) y4 t5
-      | _ -> raise Impossible
-  
-  
-    let rec insert x = function
-      | Leaf -> Node (Leaf, x, Leaf, 1)
-      | (Node (tl, y, tr, _)) as node ->
-          match Elt.compare x y with
-          | 0 -> node
-          | res when res < 0 (* x < y *) ->
-              begin match insert x tl with
-              | Leaf -> raise Impossible
-              | (Node (tll, yl, tlr, hl)) as tl ->
-                  if hl - height tr <= 1 then
-                    mknode tl y tr
-                  else
-                    let tl = if height tll < height tlr
-                             then rotl tl
-                             else tl
-                    in
-                    rotr (mknode tl y tr)
-              end
-          | _ (* x > y *) ->
-              begin match insert x tr with
-              | Leaf -> raise Impossible
-              | (Node (trl, yr, trr, hr)) as tr ->
-                  if hr - height tl <= 1 then
-                    mknode tl y tr
-                  else
-                    let tr = if height trl > height trr
-                             then rotr tr
-                             else tr
-                    in
-                    rotl (mknode tl y tr)
-            end
-  
-    let rec inorder = function
-      | Leaf -> []
-      | Node (tl, y, tr, _) -> inorder tl @ y :: inorder tr
-  
-    let rec check_balanced = function
-      | Leaf -> ()
-      | Node (tl, _, tr, h) ->
-          assert (h = 1 + max (height tl) (height tr));
-          check_balanced tl;
-          check_balanced tr
-  
-    let check_search_tree =
-      let assert_lt = function
-        | Some x, Some y -> assert (Elt.compare x y < 0);
-        | _, _ -> ()
-      in
-      let rec f bl br = function
-        | Leaf -> assert_lt (bl, br) (* probably redundant *)
-        | Node (tl, y, tr, _) -> assert_lt (bl, Some y);
-                                 assert_lt (Some y, br);
-                                 f bl (Some y) tl;
-                                 f (Some y) br tr
-      in
-      f None None
 
-    end
 
 module List = struct
   include List
@@ -1068,6 +974,54 @@ module Solver15 : Solver = struct
       |> string_of_int
 end
 
+module Solver22 : Solver = struct
+
+
+  let rec loop (list1: int list) (list2: int list): int list=
+    match list1 with
+    |[] -> list2
+    |p::ps ->
+      match list2 with
+      |[]-> list1
+      |d::ds ->
+      if d < p then 
+        loop (ps@[p]@[d]) ds
+        else
+        loop ps (ds@[d]@[p])
+      |_-> list1
+    |_-> list2
+  
+  
+  let rec v_dva (list: string list) =
+    let rec aux acc list =
+      match list with 
+      |x::xs when x <> ""-> aux (x::acc) xs
+      |""::xs-> 
+        match (List.rev_list acc), xs with
+        |ply::xs, ply2::ys -> [xs;ys]
+      |_-> failwith "v_dva"
+    in
+    aux [] list
+  
+  
+  let naloga1 (data: string)=
+    let podatki = String.split_on_char '\n' data in
+    let [list1;list2] =
+    podatki 
+    |> v_dva
+    |> List.map (List.map int_of_string)
+    in
+    loop list1 list2
+    |> List.rev_list
+    |> List.mapi (fun i x -> (i+1)*x)
+    |> List.fold_left (+) 0 
+    |> string_of_int
+
+    let naloga2 data part1 =
+        "nc"
+
+end
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver4)
   | "1" -> (module Solver4)
@@ -1080,10 +1034,11 @@ let choose_solver : string -> (module Solver) = function
   | "8" -> (module Solver8)
   | "9" -> (module Solver9)
   | "15" -> (module Solver15)
+  | "22" -> (module Solver22)
   | _ -> failwith "ni se reseno"
 
 let main () =
-  let day = "15" in (*Sys.argv.(1) in*)
+  let day = "22" in (*Sys.argv.(1) in*)
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
